@@ -109,6 +109,11 @@ class ModuleRecognition(BaseModel):
         description="Manual page number from which this context was extracted."
     )
 
+class ModuleStatus(BaseModel):
+    """Status of current module"""
+    is_completed: bool = Field(description="Whether the current module has been completed")
+    completion_reason: str = Field(description="Why this module is considered complete")
+
 
 class KTANEState(TypedDict):
     # Core bomb information
