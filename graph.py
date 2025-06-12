@@ -8,6 +8,7 @@ def build_ktane_graph():
     builder = StateGraph(KTANEState)
 
     # Add nodes
+    builder.add_node("check_completion", check_completion_node)
     builder.add_node("analyze_input", analyze_input_node)
     builder.add_node("retrieve_data", retrieve_data_node)
     builder.add_node("generate_next_action", next_action_node)
