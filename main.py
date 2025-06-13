@@ -1,6 +1,44 @@
+import os
+from dotenv import load_dotenv
+from elevenlabs.client import ElevenLabs
+from elevenlabs import play
+from openai import OpenAI
 from graph import ktane_graph
 from schemas.schemas import *
 from utils import load_enhanced_pages, load_module_descriptions
+from audio_handler import Recorder
+
+# Load environment variables
+load_dotenv()
+
+
+def play_next_action_audio(next_action_text):
+    """Convert NextAction text to speech and play it"""
+    try:
+        elevenlabs = ElevenLabs(
+            api_key=os.getenv("ELEVENLABS_API_KEY"),
+        )
+
+        audio = elevenlabs.text_to_speech.convert(
+            text=next_action_text,
+            voice_id="JBFqnCBsd6RMkjVDRZzb",
+            model_id="eleven_multilingual_v2",
+            output_format="mp3_44100_128",
+        )
+
+        play(audio)
+
+    except Exception as e:
+        print(f"🔇 Audio playback failed: {e}")
+
+def transcribe_audio(filename, client):
+    with open(filename, "rb") as audio_file:
+        transcription = client.audio.transcriptions.create(
+            model="whisper-1",
+            file=audio_file,
+            language="en"
+        )
+    return transcription.text
 
 
 def run_ktane_chat():
@@ -10,6 +48,8 @@ def run_ktane_chat():
     print("🔧 Loading KTANE manual and modules...")
     enhanced_pages = load_enhanced_pages()
     descriptions = load_module_descriptions()
+    recorder = Recorder()
+    client = OpenAI()
 
     # Initialize state
     state = {
@@ -34,7 +74,9 @@ def run_ktane_chat():
 
     while True:
         # Get user input
-        user_input = input("\n🔍 Describe what you see: ").strip()
+        wav_file = recorder.listen_and_record()
+        user_input = transcribe_audio(wav_file, client)
+        print(user_input)
 
         # Handle special commands
         if user_input.lower() in ['quit', 'exit', 'q']:
@@ -70,9 +112,12 @@ def run_ktane_chat():
             # Update state with results (important for memory!)
             state.update(result)
 
-            # Display the response
+            # Display and play the response
             if result.get("next_action"):
-                print(f"🎯 Next Action: {result['next_action'].action}")
+                next_action_text = result['next_action'].action
+                print(f"🎯 Next Action: {next_action_text}")
+                print("🔊 Playing audio...")
+                play_next_action_audio(next_action_text)
 
             # Optional: Show current knowledge state
             if result["known_information"].known:
