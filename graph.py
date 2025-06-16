@@ -14,7 +14,7 @@ def build_ktane_graph():
     builder.add_node("generate_next_action", next_action_node)
 
     # Set entry point
-    builder.set_entry_point("analyze_input")
+    builder.set_entry_point("check_completion")
 
     # Define the decision logic
     def should_retrieve_data(state: KTANEState) -> str:
@@ -37,6 +37,7 @@ def build_ktane_graph():
             return "generate_next_action"
 
     # Add edges
+    builder.add_edge("check_completion", "analyze_input")
     builder.add_conditional_edges("analyze_input", should_retrieve_data)
     builder.add_edge("retrieve_data", "generate_next_action")
     builder.add_edge("generate_next_action", END)
