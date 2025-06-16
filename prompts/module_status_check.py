@@ -37,6 +37,15 @@ C.  **Ambiguity rule:**
 ✅  **Completed**  
    – I finished that one – **now I see a button**.
 
+✅  **Completed**  
+   – The module has been solved.
+   
+✅  **Completed**  
+   – Moving to the next module!
+   
+✅  **Completed**  
+   – I acknowledge that the module has been completed
+
 ⚠️  **Not completed (ambiguous)**  
    – There’s a green light on the top part, **but the display just changed**.  
      (Could be same module still active ➜ ask)
@@ -52,7 +61,6 @@ Return **one** JSON object that matches the `ModuleStatus` schema.
 Current user input: {user_input}
 """
     ),
-    # Provide the conversation history for context
     MessagesPlaceholder(variable_name="messages"),
     (
         "system",
