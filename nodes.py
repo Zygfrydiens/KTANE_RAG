@@ -41,8 +41,10 @@ def next_action_node(state: KTANEState) -> Dict[str, Any]:
     result = next_action_chain.invoke({
         "known_information": state["known_information"],
         "bomb_state": state["bomb_state"],
-        "context": state["user_input"],
-        "messages": state["messages"]
+        "context": state["manual_context"],
+        "messages": state["messages"],
+        "user_input": state["user_input"]
+
     })
 
     # Extract the NextAction from the result
@@ -99,7 +101,7 @@ def check_completion_node(state: KTANEState) -> Dict[str, Any]:
     # Use the module status chain
     result = module_status_check_chain.invoke({
         "user_input": state["user_input"],
-        "messages": state["messages"][-4:]  # Last 4 messages for context
+        "messages": state["messages"]
     })
 
     # Extract the ModuleStatus from the result
