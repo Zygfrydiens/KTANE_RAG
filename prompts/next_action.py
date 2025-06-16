@@ -17,6 +17,9 @@ next_action_prompt = ChatPromptTemplate.from_messages(
                     Keep it flavour-free and short; one to three sentences.
                     
                     Return **one JSON object** of type `NextAction`. Nothing else.
+                    
+                    User input:
+                    {user_input}
 
                     BombState: 
                     {bomb_state}
