@@ -1,49 +1,51 @@
-# graph.py
-from langgraph.graph import StateGraph, END
+# updated_graph.py
+from langgraph.graph import StateGraph, END, START
 from nodes import *
 
 
 def build_ktane_graph():
+    """Build the KTANE graph according to the architecture diagram"""
+
     # Create the graph
     builder = StateGraph(KTANEState)
 
-    # Add nodes
-    builder.add_node("check_completion", check_completion_node)
-    builder.add_node("analyze_input", analyze_input_node)
-    builder.add_node("retrieve_data", retrieve_data_node)
-    builder.add_node("generate_next_action", next_action_node)
+    # Add all nodes
+    builder.add_node("router", router_node)
+    builder.add_node("analyse", analyze_input_node)
+    builder.add_node("module_recognition", module_recognition_node)
+    builder.add_node("defuser_assistant", defuser_assistant_node)
+    builder.add_node("create_flavoured_message", create_flavoured_message_node)
 
-    # Set entry point
-    builder.set_entry_point("check_completion")
 
-    # Define the decision logic
-    def should_retrieve_data(state: KTANEState) -> str:
-        """Run retrieve_data only when context is empty AND there's unknown info (max 3 retries)"""
+    # Define routing logic based on router decision
+    def route_after_router(state: KTANEState) -> str:
+        """Route to the appropriate node based on router decision"""
+        routing_decision = state["route"]
+        print(routing_decision)
+        if state["current_module"] == "" or routing_decision == "recognition":
+            return "module_recognition"
+        elif routing_decision == "defuser":
+            return "defuser_assistant"
 
-        # Get current retry count (default to 0 if not present)
-        retry_count = state.get("retrieve_data_retries", 0)
-
-        # Check if we've exceeded max retries
-        if retry_count >= 3:
-            return "generate_next_action"
-
-        # Original logic
-        manual_context_empty = not state.get("manual_context") or state["manual_context"] == ""
-        has_unknown_info = state["known_information"].unknown.strip() != ""
-
-        if manual_context_empty and has_unknown_info:
-            return "retrieve_data"
+    # Define routing after module recognition
+    def route_after_recognition(state: KTANEState) -> str:
+        """Route to defuser if module was identified, otherwise create message"""
+        if state.get("manual_context") and state["manual_context"].strip():
+            return "defuser_assistant"
         else:
-            return "generate_next_action"
+            return "create_flavoured_message"
 
-    # Add edges
-    builder.add_edge("check_completion", "analyze_input")
-    builder.add_conditional_edges("analyze_input", should_retrieve_data)
-    builder.add_edge("retrieve_data", "generate_next_action")
-    builder.add_edge("generate_next_action", END)
+    # Add edges following the architecture diagram
+    builder.add_edge(START, "analyse")
+    builder.add_edge(START, "router")
+    builder.add_conditional_edges("router", route_after_router)
+    builder.add_conditional_edges("module_recognition", route_after_recognition)
+
+    builder.add_edge("defuser_assistant", "create_flavoured_message")
+
+    builder.add_edge("create_flavoured_message", END)
 
     return builder.compile()
 
-
-# Create the graph
+# Create both graph versions
 ktane_graph = build_ktane_graph()
