@@ -53,6 +53,9 @@ def run_ktane_chat():
 
     # Initialize state
     state = {
+        "current_module": "",
+        "current_module_description": "",
+        "route": "module_recognition",
         "bomb_state": BombState(),
         "known_information": KnownInformation(
             known="",
