@@ -1,6 +1,18 @@
 from typing import List, Optional, TypedDict
 from pydantic import BaseModel, Field
+from typing import Literal
 
+
+class RoutingDecision(BaseModel):
+    """Return value of the router node."""
+
+    destination: Literal["faq", "recognition", "defuser"] = Field(
+        ...,
+        description=(
+            "Next internal node to run. "
+            "Must be exactly one of: 'faq', 'recognition', 'defuser'."
+        )
+    )
 
 class BombState(BaseModel):
     """Persisted across turns; anything the agent needs every cycle."""
@@ -75,11 +87,12 @@ class NextAction(BaseModel):
         description="Single, unambiguous instruction or question."
     )
 
+
 class FlavouredMessage(BaseModel):
-    """User-facing message with personality (one sentence, max ~30 words)."""
+    """User-facing line, one sentence, already in-character."""
     message: str = Field(
         ...,
-        description="Concise line addressed to the defuser, already in-character."
+        description="Concise sentence addressed to the defuser, ≤ 30 words."
     )
 
 class PagesList(BaseModel):
@@ -114,9 +127,20 @@ class ModuleStatus(BaseModel):
     is_completed: bool = Field(description="Whether the current module has been completed")
     completion_reason: str = Field(description="Why this module is considered complete")
 
+class RecognitionResult(BaseModel):
+    """
+    Unified output for the recognition node.
+    - Always returns updated KnownInformation.
+    - If the module is identified with confidence ≥ 0.8, also return pages_list.
+    """
+    known_information: KnownInformation
+    module_recognition: ModuleRecognition
+    confidence_score: float
 
 class KTANEState(TypedDict):
     # Core bomb information
+    current_module: Optional[str]
+    current_module_description: Optional[str]
     bomb_state: BombState
     known_information: KnownInformation
 
@@ -126,6 +150,7 @@ class KTANEState(TypedDict):
 
     # Manual context (when retrieved)
     manual_context: Optional[str]
+    route: str
 
     # Current action to take
     next_action: Optional[NextAction]
